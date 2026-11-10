@@ -1,7 +1,6 @@
 from .istftnet import Decoder
 from .modules import CustomAlbert, ProsodyPredictor, TextEncoder
 from dataclasses import dataclass
-from huggingface_hub import hf_hub_download
 from loguru import logger
 from transformers import AlbertConfig
 from typing import Dict, Optional, Union
@@ -11,7 +10,7 @@ import torch
 class KModel(torch.nn.Module):
     '''
     KModel is a torch.nn.Module with 2 main responsibilities:
-    1. Init weights, downloading config.json + model.pth from HF if needed
+    1. Init weights from a local config.json + model.pth
     2. forward(phonemes: str, ref_s: FloatTensor) -> (audio: FloatTensor)
 
     You likely only need one KModel instance, and it can be reused across
@@ -20,13 +19,8 @@ class KModel(torch.nn.Module):
     Unlike KPipeline, KModel is language-blind.
 
     KModel stores self.vocab and thus knows how to map phonemes -> input_ids,
-    so there is no need to repeatedly download config.json outside of KModel.
+    so there is no need to repeatedly load config.json outside of KModel.
     '''
-
-    MODEL_NAMES = {
-        'hexgrad/Kokoro-82M': 'kokoro-v1_0.pth',
-        'hexgrad/Kokoro-82M-v1.1-zh': 'kokoro-v1_1-zh.pth',
-    }
 
     def __init__(
         self,
@@ -36,14 +30,10 @@ class KModel(torch.nn.Module):
         disable_complex: bool = False
     ):
         super().__init__()
-        if repo_id is None:
-            repo_id = 'hexgrad/Kokoro-82M'
-            print(f"WARNING: Defaulting repo_id to {repo_id}. Pass repo_id='{repo_id}' to suppress this warning.")
         self.repo_id = repo_id
         if not isinstance(config, dict):
             if not config:
-                logger.debug("No config provided, downloading from HF")
-                config = hf_hub_download(repo_id=repo_id, filename='config.json')
+                raise ValueError('config (path or dict) is required; automatic download is disabled.')
             with open(config, 'r', encoding='utf-8') as r:
                 config = json.load(r)
                 logger.debug(f"Loaded config: {config}")
@@ -64,7 +54,7 @@ class KModel(torch.nn.Module):
             dim_out=config['n_mels'], disable_complex=disable_complex, **config['istftnet']
         )
         if not model:
-            model = hf_hub_download(repo_id=repo_id, filename=KModel.MODEL_NAMES[repo_id])
+            raise ValueError('model (local weights path) is required; automatic download is disabled.')
         for key, state_dict in torch.load(model, map_location='cpu', weights_only=True).items():
             assert hasattr(self, key), key
             try:

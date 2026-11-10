@@ -114,9 +114,7 @@ def _download_or_resolve(repo_id: str, filename: str, local_path: str | Path | N
             return path
         filename = str(local_path)
 
-    from huggingface_hub import hf_hub_download
-
-    return Path(hf_hub_download(repo_id=repo_id, filename=filename))
+    raise FileNotFoundError(f'File not found: {filename!r} (repo {repo_id!r}). Automatic download is disabled; provide a local file path.')
 
 
 def prepare_transformers_for_kokoro() -> None:

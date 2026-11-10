@@ -1,7 +1,6 @@
 from .istftnet import Decoder
 from .modules import CustomAlbert, ProsodyPredictor, TextEncoder
 from dataclasses import dataclass
-from huggingface_hub import hf_hub_download
 from loguru import logger
 from transformers import AlbertConfig
 from typing import Dict, Optional, Union
@@ -42,8 +41,7 @@ class KModel(torch.nn.Module):
         self.repo_id = repo_id
         if not isinstance(config, dict):
             if not config:
-                logger.debug("No config provided, downloading from HF")
-                config = hf_hub_download(repo_id=repo_id, filename='config.json')
+                raise ValueError('config (path or dict) is required; automatic download is disabled.')
             with open(config, 'r', encoding='utf-8') as r:
                 config = json.load(r)
                 logger.debug(f"Loaded config: {config}")
@@ -64,7 +62,7 @@ class KModel(torch.nn.Module):
             dim_out=config['n_mels'], disable_complex=disable_complex, **config['istftnet']
         )
         if not model:
-            model = hf_hub_download(repo_id=repo_id, filename=KModel.MODEL_NAMES[repo_id])
+            raise ValueError('model (local weights path) is required; automatic download is disabled.')
         for key, state_dict in torch.load(model, map_location='cpu', weights_only=True).items():
             assert hasattr(self, key), key
             try:

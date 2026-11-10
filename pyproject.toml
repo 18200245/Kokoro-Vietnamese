@@ -11,12 +11,11 @@ requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
 authors = [{ name = "iamdinhthuan" }]
 dependencies = [
-    "attrs",
     "gradio",
-    "huggingface_hub",
     "loguru",
     "numpy",
     "packaging",
+    "scipy",
     "soundfile",
     "torch",
     "transformers>=4.48,<5",
@@ -30,20 +29,20 @@ onnx = [
 ]
 training = [
     "accelerate",
+    "click",
     "einops",
     "einops-exts",
     "librosa",
     "matplotlib",
-    "misaki[en]>=0.9.4",
     "modal",
     "monotonic-align @ git+https://github.com/resemble-ai/monotonic_align.git",
     "munch",
-    "nltk",
-    "pydub",
+    "pandas",
     "pyyaml",
     "tensorboard",
     "torchaudio",
     "tqdm",
+    "typing_extensions",
 ]
 
 [project.scripts]
